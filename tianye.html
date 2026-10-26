@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>田野之声 · 村落导览</title>
+<style>
+  :root {
+    --primary: #8B4513;
+    --primary-light: #A0522D;
+    --secondary: #D84315;
+    --accent: #FF8F00;
+    --bg: #f7f3ed;
+    --card: #ffffff;
+    --text: #5D4037;
+    --text-light: #8D6E63;
+    --success: #4CAF50;
+    --warning: #FF5722;
+    --shadow: 0 4px 20px rgba(139,69,19,0.08);
+    --shadow-sm: 0 2px 10px rgba(139,69,19,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #e0d8cc;
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* 手机外壳 */
+  .phone-shell {
+    width: 390px;
+    height: 844px;
+    background: #000;
+    border-radius: 48px;
+    padding: 12px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3), 0 0 0 2px #333;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-shell::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 32px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 300;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 顶部状态栏 */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    pointer-events: none;
+  }
+  .status-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    letter-spacing: 0.5px;
+  }
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+  }
+  .signal-bars span {
+    width: 3px;
+    background: #000;
+    border-radius: 1px;
+  }
+  .signal-bars span:nth-child(1) { height: 4px; }
+  .signal-bars span:nth-child(2) { height: 6px; }
+  .signal-bars span:nth-child(3) { height: 8px; }
+  .signal-bars span:nth-child(4) { height: 10px; }
+  .wifi-icon {
+    width: 14px; height: 10px;
+    border: 2px solid #000;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    position: relative;
+  }
+  .wifi-icon::before {
+    content: ''; position: absolute;
+    top: -4px; left: 2px;
+    width: 6px; height: 6px;
+    border: 2px solid #000;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+  }
+  .battery {
+    width: 22px; height: 11px;
+    border: 1.5px solid #000;
+    border-radius: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 1.5px;
+  }
+  .battery::after {
+    content: ''; position: absolute;
+    right: -3px; top: 3px;
+    width: 2px; height: 4px;
+    background: #000;
+    border-radius: 0 1px 1px 0;
+  }
+  .battery-level {
+    width: 70%; height: 100%;
+    background: #000;
+    border-radius: 1px;
+  }
+
+  /* 小程序胶囊 */
+  .capsule {
+    position: absolute;
+    top: 8px; right: 16px;
+    z-index: 260;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    gap: 1px;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .capsule-btn {
+    width: 38px; height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .capsule-btn:active { opacity: 0.6; }
+  .capsule-divider {
+    width: 1px; height: 16px;
+    background: rgba(0,0,0,0.1);
+  }
+  .capsule-dots {
+    display: flex;
+    gap: 2.5px;
+  }
+  .capsule-dots span {
+    width: 3.5px; height: 3.5px;
+    background: #000;
+    border-radius: 50%;
+  }
+  .capsule-circle {
+    width: 14px; height: 14px;
+    border: 1.5px solid #000;
+    border-radius: 50%;
+  }
+
+  #app {
+    max-width: 430px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100%;
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 70px;
+    padding-top: 48px;
+  }
+  .mini-nav {
+    background: var(--primary);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .mini-nav-inner {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 16px;
+  }
+  .mini-nav .back {
+    position: absolute;
+    left: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 10px;
+    opacity: 0.9;
+  }
+  .mini-nav .title { font-weight: 700; font-size: 16px; letter-spacing: 1px; }
+  .atom-island {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 18px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    gap: 2px;
+  }
+  .atom-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; transition: background 0.2s;
+  }
+  .atom-btn:active { background: rgba(255,255,255,0.15); }
+  .atom-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+
+  .page { display: none; animation: fadeIn 0.25s ease; }
+  .page.active { display: block; }
+
+  .home-body {
+    height: calc(100vh - 44px - 70px - 48px);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .village-card-big {
+    flex: 1;
+    background: var(--card);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .village-card-big:active { transform: scale(0.98); }
+  .village-card-big .img-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .village-card-big .img-wrap img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .village-card-big .img-wrap .fallback {
+    width: 100%; height: 100%;
+    display: none; align-items: center; justify-content: center;
+    font-size: 80px;
+  }
+  .village-card-big .img-wrap .village-name-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 40px 16px 14px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.55));
+    color: #fff;
+  }
+  .village-card-big .img-wrap .village-name-overlay .name {
+    font-size: 22px; font-weight: 800; letter-spacing: 2px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .village-card-big .img-wrap .village-name-overlay .sub {
+    font-size: 12px; opacity: 0.9; margin-top: 3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .village-card-big .info-bar {
+    padding: 10px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff;
+  }
+  .village-card-big .info-bar .spots {
+    font-size: 12px; color: var(--text-light); font-weight: 500;
+  }
+  .village-card-big .info-bar .arrow {
+    color: var(--primary); font-size: 13px; font-weight: 700;
+  }
+  .badge-corner {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    color: #FFD54F; padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; gap: 3px;
+  }
+
+  .map-container {
+    position: relative; width: 100%; background: var(--bg);
+  }
+  .map-container img { width: 100%; height: auto; display: block; }
+  .map-markers {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  }
+  .map-marker {
+    position: absolute;
+    transform: translate(-50%, calc(-100% + 2px));
+    cursor: pointer; z-index: 10;
+    transition: transform 0.15s;
+  }
+  .map-marker:active { transform: translate(-50%, calc(-100% + 2px)) scale(0.95); }
+  .map-marker .pin {
+    background: var(--warning); color: #fff;
+    padding: 4px 10px; border-radius: 14px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex; align-items: center; gap: 3px;
+    line-height: 1.3;
+  }
+  .map-marker.checked .pin { background: var(--success); }
+  .map-marker .arrow {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--warning);
+    margin: 0 auto;
+  }
+  .map-marker.checked .arrow { border-top-color: var(--success); }
+
+  .detail-wrap { padding: 16px; }
+  .detail-card {
+    background: var(--card); border-radius: 24px;
+    padding: 24px 20px; box-shadow: var(--shadow);
+  }
+  .detail-icon {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: linear-gradient(135deg, #FFD54F, #FF8F00);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; margin: 0 auto 14px;
+    box-shadow: 0 4px 12px rgba(255,143,0,0.25);
+  }
+  .detail-name { text-align: center; color: var(--text); font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .detail-tag { text-align: center; margin-bottom: 16px; }
+  .detail-tag span { background: #FFF3E0; color: #E65100; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .detail-desc { color: #6D4C41; line-height: 1.9; font-size: 14px; margin-bottom: 20px; text-align: justify; }
+  .checkin-box {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border-radius: 18px; padding: 20px; text-align: center;
+  }
+  .checkin-title { font-weight: 800; color: #2E7D32; margin-bottom: 12px; font-size: 15px; }
+  .qr-area {
+    width: 150px; height: 150px; background: #fff;
+    margin: 0 auto 12px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .qr-area.dashed { border: 2.5px dashed #81C784; }
+  .qr-area.solid { border: 2.5px solid var(--success); }
+  .qr-area:active { transform: scale(0.96); }
+  .qr-inner { text-align: center; }
+  .qr-inner .icon { font-size: 48px; margin-bottom: 4px; }
+  .qr-inner .hint { font-size: 11px; color: #81C784; font-weight: 500; }
+  .qr-inner .success-text { font-size: 12px; color: var(--success); font-weight: 700; margin-top: 4px; }
+  .checkin-status { font-size: 12px; color: #558B2F; font-weight: 500; }
+
+  .redeem-body { padding: 16px; }
+  .redeem-header {
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    border-radius: 20px; padding: 24px 20px;
+    margin-bottom: 16px; text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .redeem-header .trophy { font-size: 44px; margin-bottom: 6px; }
+  .redeem-header .count { font-weight: 800; color: var(--text); font-size: 18px; }
+  .redeem-header .hint { color: var(--text-light); font-size: 12px; margin-top: 3px; }
+  .redeem-list { display: flex; flex-direction: column; gap: 10px; }
+  .redeem-item {
+    background: var(--card); border-radius: 16px; padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .redeem-item .icon { font-size: 36px; }
+  .redeem-item .info { flex: 1; }
+  .redeem-item .info .name { font-weight: 700; color: var(--text); font-size: 14px; }
+  .redeem-item .info .req { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .redeem-btn {
+    background: var(--primary); color: #fff; border: none;
+    padding: 8px 16px; border-radius: 18px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .redeem-btn:active { transform: scale(0.95); }
+  .redeem-btn:disabled { background: #BCAAA4; cursor: not-allowed; }
+  .redeem-btn.redeemed { background: var(--success); }
+  .redeem-location {
+    margin-top: 16px; background: var(--card);
+    border-radius: 16px; padding: 16px; box-shadow: var(--shadow-sm);
+  }
+  .redeem-location .title { font-weight: 700; color: var(--text); margin-bottom: 8px; font-size: 14px; }
+  .redeem-location .row { display: flex; align-items: center; gap: 6px; color: #6D4C41; font-size: 12px; margin-top: 4px; }
+
+  .profile-header {
+    background: linear-gradient(135deg, var(--primary), #6D4C41);
+    padding: 30px 20px 40px; text-align: center; color: #fff;
+    border-radius: 0 0 24px 24px; margin-bottom: 16px;
+  }
+  .profile-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 12px;
+    border: 3px solid rgba(255,255,255,0.3);
+  }
+  .profile-name { font-size: 18px; font-weight: 700; }
+  .profile-id { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+  .profile-stats { display: flex; justify-content: center; gap: 40px; margin-top: 16px; }
+  .profile-stat .num { font-size: 24px; font-weight: 800; }
+  .profile-stat .label { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+  .profile-menu { padding: 0 16px; }
+  .menu-item {
+    background: var(--card); border-radius: 16px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; box-shadow: var(--shadow-sm); cursor: pointer;
+  }
+  .menu-item:active { transform: scale(0.98); }
+  .menu-item .icon { font-size: 22px; width: 28px; text-align: center; }
+  .menu-item .text { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+  .menu-item .arrow { color: #BCAAA4; font-size: 14px; }
+
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex; justify-content: space-around;
+    padding: 6px 0 24px; z-index: 200;
+    border-radius: 0 0 40px 40px;
+  }
+  .tabbar-item { text-align: center; cursor: pointer; flex: 1; padding: 4px 0; transition: all 0.2s; position: relative; }
+  .tabbar-item:active { transform: scale(0.9); }
+  .tabbar-item .icon { font-size: 22px; transition: transform 0.2s; }
+  .tabbar-item .label { font-size: 10px; margin-top: 2px; color: #9E9E9E; font-weight: 500; }
+  .tabbar-item.active .label { color: var(--primary); font-weight: 700; }
+  .tabbar-item .dot { position: absolute; top: 2px; right: 30%; width: 8px; height: 8px; background: var(--warning); border-radius: 50%; border: 2px solid #fff; }
+
+  .toast {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.85); color: #fff;
+    padding: 10px 22px; border-radius: 20px;
+    font-size: 13px; z-index: 999;
+    animation: fadeIn 0.3s, fadeOut 0.3s 2.2s forwards;
+    white-space: nowrap; font-weight: 500;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  ::-webkit-scrollbar { width: 0; }
+
+  @media (max-width: 430px) {
+    body { padding: 0; align-items: flex-start; }
+    .phone-shell { width: 100vw; height: 100vh; border-radius: 0; padding: 0; box-shadow: none; }
+    .phone-shell::before { display: none; }
+    .phone-screen { border-radius: 0; }
+    .status-bar { display: none; }
+    .capsule { display: none; }
+    #app { padding-top: 0; }
+    .tabbar { border-radius: 0; padding-bottom: 10px; position: fixed; }
+    .home-body { height: calc(100vh - 44px - 70px); }
+  }
+</style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="phone-screen">
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <div class="status-time" id="status-time">9:41</div>
+      <div class="status-right">
+        <div class="signal-bars"><span></span><span></span><span></span><span></span></div>
+        <div class="wifi-icon"></div>
+        <div class="battery"><div class="battery-level"></div></div>
+      </div>
+    </div>
+    <!-- 小程序胶囊 -->
+    <div class="capsule">
+      <div class="capsule-btn">
+        <div class="capsule-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="capsule-divider"></div>
+      <div class="capsule-btn">
+        <div class="capsule-circle"></div>
+      </div>
+    </div>
+
+<div id="app">
+
+  <!-- 首页 -->
+  <div id="page-home" class="page active">
+    <div class="mini-nav">
+      <div class="mini-nav-inner">
+        <span class="title">🏡 田野之声</span>
+        <div class="atom-island">
+          <div class="atom-btn" onclick="showRedeem()" title="兑换">🎁</div>
+          <div class="atom-divider"></div>
+          <div class="atom-btn" onclick="showProfile()" title="我的">👤</div>
+        </div>
+      </div>
+    </div>
+    <div class="home-body">
+      <div class="village-card-big" onclick="showMap('shixia')">
+        <div class="img-wrap">
+          <img src="pone.img" alt="石匣村" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="fallback" style="display:none; background: linear-gradient(135deg, #D84315, #BF360C);">🏮</div>
+          <div class="badge-corner" id="corner-shixia">🔒 0/8</div>
+          <div class="village-name-overlay">
+            <div class="name">石匣村</div>
+            <div class="sub">石匣村旅行地图</div>
+          </div>
+        </div>
+        <div class="info-bar">
+          <span class="spots">小米奶茶 · 文创店 · 水上露营 · 戏台 · 村史馆 · 长桌宴 · 古戏台 · 民宿</span>
+          <span class="arrow">进入 ></span>
+        </div>
+      </div>
+      <div class="village-card-big" onclick="showMap('sandefan')">
+        <div class="img-wrap">
+          <img src="ptwo.img" alt="三德范村" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="fallback" style="display:none; background: linear-gradient(135deg, #2E7D32, #1B5E20);">🎭</div>
+          <div class="badge-corner" id="corner-sandefan">🔒 0/18</div>
+          <div class="village-name-overlay">
+            <div class="name">三德范村</div>
+            <div class="sub">三德范 · 扮旅拾遗地图</div>
+          </div>
+        </div>
+        <div class="info-bar">
+          <span class="spots">江湖驿站 · 钱庄 · 非遗手作 · 回忆录 · 档案馆 · 玄帝阁 · 博物馆 · 石刻馆 · 记忆馆 · 乐园 · 人和门 · 民以食为天 · 非遗集市 · 茶社 · 芯子戏台 · 儒学讲堂 · 客栈 · 文创店</span>
+          <span class="arrow">进入 ></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 地图页 -->
+  <div id="page-map" class="page">
+    <div class="mini-nav">
+      <div class="mini-nav-inner">
+        <span class="back" onclick="goHome()">←</span>
+        <span class="title" id="map-title">石匣村</span>
+      </div>
+    </div>
+    <div class="map-container">
+      <img id="map-image" src="pone.img" alt="导览图" onerror="this.style.display='none'">
+      <div class="map-markers" id="map-markers"></div>
+    </div>
+  </div>
+
+  <!-- 详情页 -->
+  <div id="page-detail" class="page">
+    <div class="mini-nav">
+      <div class="mini-nav-inner">
+        <span class="back" onclick="goBackToMap()">←</span>
+        <span class="title" id="detail-nav-title">点位详情</span>
+      </div>
+    </div>
+    <div class="detail-wrap">
+      <div class="detail-card">
+        <div class="detail-icon" id="detail-icon">🏛️</div>
+        <div class="detail-name" id="detail-name">点位名称</div>
+        <div class="detail-tag" id="detail-tag"><span>非遗展馆</span></div>
+        <div class="detail-desc" id="detail-desc">这里是点位的详细介绍文字...</div>
+        <div class="checkin-box">
+          <div class="checkin-title">📍 现场扫码打卡</div>
+          <div class="qr-area dashed" id="qr-area" onclick="doCheckIn()">
+            <div class="qr-inner" id="qr-inner">
+              <div class="icon">📷</div>
+              <div class="hint">点击模拟扫码</div>
+            </div>
+          </div>
+          <div class="checkin-status" id="checkin-status">到达点位后扫码即可获得电子徽章</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 兑换页 -->
+  <div id="page-redeem" class="page">
+    <div class="mini-nav">
+      <div class="mini-nav-inner">
+        <span class="back" onclick="goHome()">←</span>
+        <span class="title">🎁 徽章兑换</span>
+      </div>
+    </div>
+    <div class="redeem-body">
+      <div class="redeem-header">
+        <div class="trophy">🏆</div>
+        <div class="count">当前徽章 <span id="redeem-count">0</span> / 26</div>
+        <div class="hint">集齐所有徽章解锁终极福利</div>
+      </div>
+      <div class="redeem-list">
+        <div class="redeem-item">
+          <div class="icon">🍵</div>
+          <div class="info">
+            <div class="name">小米奶茶兑换券</div>
+            <div class="req">需集齐 3 枚徽章</div>
+          </div>
+          <button class="redeem-btn" id="btn-r1" onclick="redeem(1, 3)">兑换</button>
+        </div>
+        <div class="redeem-item">
+          <div class="icon">🎭</div>
+          <div class="info">
+            <div class="name">戏迷达人纪念徽章</div>
+            <div class="req">需集齐 8 枚徽章</div>
+          </div>
+          <button class="redeem-btn" id="btn-r2" onclick="redeem(2, 8)">兑换</button>
+        </div>
+        <div class="redeem-item">
+          <div class="icon">🏅</div>
+          <div class="info">
+            <div class="name">江湖大侠终极礼包</div>
+            <div class="req">需集齐全部 26 枚徽章</div>
+          </div>
+          <button class="redeem-btn" id="btn-r3" onclick="redeem(3, 26)">兑换</button>
+        </div>
+      </div>
+      <div class="redeem-location">
+        <div class="title">📍 兑换地点</div>
+        <div class="row"><span>📌</span> 石匣村文创店 / 三德范村江湖文创店</div>
+        <div class="row"><span>⏰</span> 每日 9:00 - 17:00</div>
+        <div class="row"><span>📋</span> 出示兑换码即可领取实物福利</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的页面 -->
+  <div id="page-profile" class="page">
+    <div class="mini-nav">
+      <div class="mini-nav-inner">
+        <span class="back" onclick="goHome()">←</span>
+        <span class="title">👤 我的</span>
+      </div>
+    </div>
+    <div class="profile-header">
+      <div class="profile-avatar">🧑‍🌾</div>
+      <div class="profile-name">田野探索者</div>
+      <div class="profile-id">ID: tianye_2026</div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="num" id="stat-checked">0</div>
+          <div class="label">已打卡</div>
+        </div>
+        <div class="profile-stat">
+          <div class="num" id="stat-total">26</div>
+          <div class="label">总点位</div>
+        </div>
+        <div class="profile-stat">
+          <div class="num" id="stat-redeemed">0</div>
+          <div class="label">已兑换</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-menu">
+      <div class="menu-item" onclick="showRedeem()">
+        <span class="icon">🎁</span>
+        <span class="text">徽章兑换</span>
+        <span class="arrow">></span>
+      </div>
+      <div class="menu-item" onclick="goHome()">
+        <span class="icon">🏡</span>
+        <span class="text">村落导览</span>
+        <span class="arrow">></span>
+      </div>
+      <div class="menu-item" onclick="resetData()">
+        <span class="icon">🔄</span>
+        <span class="text">重置数据</span>
+        <span class="arrow">></span>
+      </div>
+      <div class="menu-item">
+        <span class="icon">ℹ️</span>
+        <span class="text">关于田野之声</span>
+        <span class="arrow">></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TabBar -->
+  <div class="tabbar">
+    <div class="tabbar-item active" onclick="goHome()">
+      <div class="icon">🏠</div>
+      <div class="label">首页</div>
+    </div>
+    <div class="tabbar-item" onclick="showRedeem()">
+      <div class="icon">🎁</div>
+      <div class="label">兑换</div>
+    </div>
+    <div class="tabbar-item" onclick="showProfile()">
+      <div class="icon">👤</div>
+      <div class="label">我的</div>
+    </div>
+  </div>
+
+</div>
+
+  </div>
+</div>
+
+<script>
+// 更新时间
+function updateTime() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const el = document.getElementById('status-time');
+  if (el) el.textContent = h + ':' + m;
+}
+updateTime();
+setInterval(updateTime, 1000);
+
+const spots = {
+  shixia: [
+    { id: 'sx1', name: '小米奶茶店', x: 40, y: 30, icon: '🧋', tag: '特色美食', desc: '石匣村特色小米奶茶，选用当地优质小米与新鲜牛奶熬制而成，口感醇厚，带有淡淡米香。是游客打卡必尝的网红饮品，店内装饰充满乡土气息。', badge: '🧋' },
+    { id: 'sx2', name: '文创店', x: 30, y: 44, icon: '🎨', tag: '文创手作', desc: '汇集石匣村各类文创产品，从手工刺绣到陶艺制品，每一件都承载着村落的文化记忆。游客可在此选购纪念品，也可亲手体验制作。', badge: '🎨' },
+    { id: 'sx3', name: '水上露营', x: 15, y: 64, icon: '⛺', tag: '户外体验', desc: '依托村落水系打造的特色露营基地，夜晚可观星、听水声入眠。提供帐篷租赁和烧烤设备，是亲近自然的绝佳去处。', badge: '⛺' },
+    { id: 'sx4', name: '戏台', x: 55, y: 88, icon: '🎭', tag: '非遗戏台', desc: '石匣村标志性古戏台，始建于清代，雕梁画栋，气势恢宏。每逢节庆，这里会上演传统戏曲，是感受非遗戏曲文化的核心场所。', badge: '🎭' },
+    { id: 'sx5', name: '村史馆', x: 74, y: 70, icon: '📚', tag: '文化展馆', desc: '记录石匣村百年变迁的村史馆，通过老照片、农具展品和多媒体展示，生动再现了村落从农耕时代到文旅融合的历程。', badge: '📚' },
+    { id: 'sx6', name: '长桌宴', x: 84, y: 34, icon: '🍲', tag: '民俗餐饮', desc: '石匣村最具特色的集体餐饮体验，数十米长桌沿街摆开，村民与游客共享地道农家菜。每逢重要节日举办，热闹非凡。', badge: '🍲' },
+    { id: 'sx7', name: '古戏台', x: 90, y: 54, icon: '🏛️', tag: '历史建筑', desc: '另一处保存完好的古戏台建筑，与主戏台遥相呼应。建筑风格独特，飞檐翘角间尽显匠心，是研究当地戏曲文化的重要实物资料。', badge: '🏛️' },
+    { id: 'sx8', name: '民宿', x: 82, y: 20, icon: '🏠', tag: '特色住宿', desc: '由传统民居改造而成的精品民宿，保留原有青砖黛瓦风貌的同时配备现代舒适设施。住在这里，推窗见山，闭门听溪。', badge: '🏠' }
+  ],
+  sandefan: [
+    { id: 'sf1', name: '江湖驿站', x: 68, y: 10, icon: '🏮', tag: '江湖初探', desc: '三德范村的门户，也是"江湖大侠"之旅的起点。驿站内可领取探索任务卡，开启你的非遗江湖之旅。', badge: '🏮' },
+    { id: 'sf2', name: '三德范钱庄', x: 56, y: 16, icon: '💰', tag: '江湖初探', desc: '仿古钱庄建筑，展示古代货币文化和当地商贸历史。游客可在此兑换"江湖币"用于村内特色消费。', badge: '💰' },
+    { id: 'sf3', name: '非遗手作体验馆', x: 80, y: 22, icon: '✂️', tag: '技艺争锋', desc: '汇聚多项非遗技艺的体验空间，可亲手制作剪纸、泥塑、编织等传统手工艺品。在老师傅的指导下，感受指尖上的非遗魅力。', badge: '✂️' },
+    { id: 'sf4', name: '江湖三德回忆录', x: 84, y: 30, icon: '📖', tag: '江湖初探', desc: '用文字和影像记录三德范村的点滴往事，一本活着的村落记忆。翻阅之间，感受岁月流转中的不变乡愁。', badge: '📖' },
+    { id: 'sf5', name: '江湖档案馆', x: 62, y: 32, icon: '📂', tag: '江湖初探', desc: '保存着三德范村珍贵的历史档案，从地契文书到家族谱牒，是研究村落历史、民俗文化的宝库。', badge: '📂' },
+    { id: 'sf6', name: '三德范玄帝阁', x: 58, y: 40, icon: '⛩️', tag: '历史建筑', desc: '始建于明代的道教建筑，飞檐翘角，气势恢宏。阁内供奉玄天上帝，香火绵延数百年，是当地重要的信仰中心。', badge: '⛩️' },
+    { id: 'sf7', name: '扮玩文化博物馆', x: 92, y: 40, icon: '🏺', tag: '文化展馆', desc: '展示三德范村扮玩文化的专题博物馆，从芯子戏台到民俗巡游，生动呈现当地独特的民间演艺传统。', badge: '🏺' },
+    { id: 'sf8', name: '江湖特色石刻馆', x: 62, y: 50, icon: '🗿', tag: '技艺争锋', desc: '陈列当地民间石刻艺术精品，从石碑到石像，刀工精湛，线条流畅。展现了传统雕刻技艺的高超水准。', badge: '🗿' },
+    { id: 'sf9', name: '江湖农民记忆馆', x: 85, y: 55, icon: '🌾', tag: '拾遗归趣', desc: '收藏展示传统农具和生活用品，还原旧时农家生活场景。每一件展品都是一段农耕记忆。', badge: '🌾' },
+    { id: 'sf10', name: '三德范儿童乐园', x: 52, y: 78, icon: '🎡', tag: '拾遗归趣', desc: '专为小朋友设计的游玩区域，融合滚铁环、跳房子等传统游戏与现代游乐设施，让孩子们在玩乐中了解传统文化。', badge: '🎡' },
+    { id: 'sf11', name: '人和门', x: 42, y: 72, icon: '🚪', tag: '历史遗迹', desc: '三德范村的古老城门遗址，见证了村落数百年的兴衰变迁。斑驳的石墙诉说着往昔故事，是连接过去与现在的时空之门。', badge: '🚪' },
+    { id: 'sf12', name: '民以食为天', x: 12, y: 66, icon: '🍜', tag: '特色美食', desc: '三德范村的传统美食馆，汇聚当地最具代表性的家常菜肴。用最朴素的食材、最传统的做法，呈现最地道的乡村味道。', badge: '🍜' },
+    { id: 'sf13', name: '非遗集市', x: 32, y: 60, icon: '🏪', tag: '非遗市集', desc: '定期举办的非遗主题集市，汇聚周边村落的手艺人现场展示技艺、售卖作品。从竹编到草编，从面塑到糖画，琳琅满目。', badge: '🏪' },
+    { id: 'sf14', name: '拾遗茶社', x: 28, y: 54, icon: '🍵', tag: '休闲体验', desc: '古色古香的乡村茶社，提供本地特色茶饮。在这里可以品茶听曲、唠嗑下棋，感受老济南的市井烟火气。', badge: '🍵' },
+    { id: 'sf15', name: '霓裳门·芯子戏台', x: 40, y: 46, icon: '🎪', tag: '非遗戏台', desc: '三德范村芯子表演的核心场地，"霓裳门"下芯子戏台高高架起，孩童们身着彩衣、脚踩高跷，演绎着流传百年的民间故事。', badge: '🎪' },
+    { id: 'sf16', name: '儒学讲堂', x: 38, y: 36, icon: '📜', tag: '文化教育', desc: '传承儒家文化的乡村讲堂，定期举办国学讲座、书法体验、经典诵读等活动。传统文化的种子在乡村土壤中生根发芽。', badge: '📜' },
+    { id: 'sf17', name: '江湖客栈', x: 18, y: 42, icon: '🏯', tag: '特色住宿', desc: '以"江湖"为主题的特色客栈，房间布置融入武侠元素与乡土风情。夜宿于此，仿佛置身江湖客栈，听风赏月。', badge: '🏯' },
+    { id: 'sf18', name: '江湖文创店', x: 28, y: 28, icon: '🛍️', tag: '拾遗归趣', desc: '三德范村官方文创商店，汇聚各类原创设计产品。从江湖主题周边到非遗衍生文创，琳琅满目。集齐徽章后可在此兑换精美礼品。', badge: '🛍️' }
+  ]
+};
+
+const allSpots = [...spots.shixia, ...spots.sandefan];
+const TOTAL = allSpots.length;
+
+let currentVillage = 'shixia';
+let currentSpot = null;
+let checkedIn = new Set(JSON.parse(localStorage.getItem('tianye_checkedIn') || '[]'));
+let redeemed = JSON.parse(localStorage.getItem('tianye_redeemed') || '[]');
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  showPage('home');
+  updateHome();
+  updateTabBar('home');
+}
+
+function updateTabBar(page) {
+  document.querySelectorAll('.tabbar-item').forEach((el, i) => {
+    el.classList.toggle('active',
+      (page === 'home' && i === 0) ||
+      (page === 'redeem' && i === 1) ||
+      (page === 'profile' && i === 2)
+    );
+  });
+}
+
+function updateHome() {
+  const sxCount = spots.shixia.filter(s => checkedIn.has(s.id)).length;
+  const sfCount = spots.sandefan.filter(s => checkedIn.has(s.id)).length;
+  document.getElementById('corner-shixia').textContent =
+    (sxCount === spots.shixia.length ? '✅ ' : '🔒 ') + sxCount + '/' + spots.shixia.length;
+  document.getElementById('corner-sandefan').textContent =
+    (sfCount === spots.sandefan.length ? '✅ ' : '🔒 ') + sfCount + '/' + spots.sandefan.length;
+  document.getElementById('corner-shixia').style.color = sxCount > 0 ? '#FFD54F' : '#fff';
+  document.getElementById('corner-sandefan').style.color = sfCount > 0 ? '#FFD54F' : '#fff';
+}
+
+function showMap(village) {
+  currentVillage = village;
+  const isShixia = village === 'shixia';
+  document.getElementById('map-title').textContent = isShixia ? '石匣村' : '三德范村';
+  document.getElementById('map-image').src = isShixia ? 'pone.img' : 'ptwo.img';
+  showPage('map');
+  renderMarkers();
+  updateTabBar('');
+}
+
+function renderMarkers() {
+  const container = document.getElementById('map-markers');
+  container.innerHTML = '';
+  spots[currentVillage].forEach((spot) => {
+    const el = document.createElement('div');
+    const isChecked = checkedIn.has(spot.id);
+    el.className = 'map-marker' + (isChecked ? ' checked' : '');
+    el.style.left = spot.x + '%';
+    el.style.top = spot.y + '%';
+    el.innerHTML = '<div class="pin">' + (isChecked ? '✓ ' : '') + spot.name + '</div><div class="arrow"></div>';
+    el.onclick = () => showDetail(spot);
+    container.appendChild(el);
+  });
+}
+
+function showDetail(spot) {
+  currentSpot = spot;
+  document.getElementById('detail-nav-title').textContent = spot.name;
+  document.getElementById('detail-icon').textContent = spot.icon;
+  document.getElementById('detail-name').textContent = spot.name;
+  document.getElementById('detail-tag').innerHTML = '<span>' + spot.tag + '</span>';
+  document.getElementById('detail-desc').textContent = spot.desc;
+  const isChecked = checkedIn.has(spot.id);
+  const qrArea = document.getElementById('qr-area');
+  const qrInner = document.getElementById('qr-inner');
+  const status = document.getElementById('checkin-status');
+  if (isChecked) {
+    qrArea.className = 'qr-area solid';
+    qrInner.innerHTML = '<div class="icon">' + spot.badge + '</div><div class="success-text">已获得徽章</div>';
+    status.textContent = '✅ 已获得「' + spot.name + '」电子徽章';
+    status.style.color = 'var(--success)';
+  } else {
+    qrArea.className = 'qr-area dashed';
+    qrInner.innerHTML = '<div class="icon">📷</div><div class="hint">点击模拟扫码</div>';
+    status.textContent = '到达点位后扫码即可获得电子徽章';
+    status.style.color = '#558B2F';
+  }
+  showPage('detail');
+}
+
+function goBackToMap() {
+  showMap(currentVillage);
+}
+
+function doCheckIn() {
+  if (!currentSpot || checkedIn.has(currentSpot.id)) return;
+  const qrInner = document.getElementById('qr-inner');
+  qrInner.innerHTML = '<div class="icon">⏳</div><div class="hint">识别中...</div>';
+  setTimeout(() => {
+    checkedIn.add(currentSpot.id);
+    localStorage.setItem('tianye_checkedIn', JSON.stringify([...checkedIn]));
+    document.getElementById('qr-area').className = 'qr-area solid';
+    qrInner.innerHTML = '<div class="icon">' + currentSpot.badge + '</div><div class="success-text">已获得徽章</div>';
+    document.getElementById('checkin-status').textContent = '✅ 打卡成功！已获得「' + currentSpot.name + '」电子徽章';
+    document.getElementById('checkin-status').style.color = 'var(--success)';
+    showToast('🎉 获得「' + currentSpot.name + '」电子徽章！');
+    updateHome();
+    updateProfile();
+  }, 700);
+}
+
+function showRedeem() {
+  showPage('redeem');
+  document.getElementById('redeem-count').textContent = checkedIn.size;
+  updateRedeemButtons();
+  updateTabBar('redeem');
+}
+
+function updateRedeemButtons() {
+  const count = checkedIn.size;
+  const reqs = {1: 3, 2: 8, 3: TOTAL};
+  [1, 2, 3].forEach(id => {
+    const btn = document.getElementById('btn-r' + id);
+    const req = reqs[id];
+    if (redeemed.includes(id)) {
+      btn.textContent = '已兑换';
+      btn.className = 'redeem-btn redeemed';
+      btn.disabled = true;
+    } else if (count >= req) {
+      btn.textContent = '兑换';
+      btn.className = 'redeem-btn';
+      btn.disabled = false;
+    } else {
+      btn.textContent = '未达标';
+      btn.className = 'redeem-btn';
+      btn.disabled = true;
+    }
+  });
+}
+
+function redeem(id, req) {
+  const count = checkedIn.size;
+  const actualReq = id === 3 ? TOTAL : req;
+  if (count < actualReq || redeemed.includes(id)) return;
+  redeemed.push(id);
+  localStorage.setItem('tianye_redeemed', JSON.stringify(redeemed));
+  const names = {1: '小米奶茶兑换券', 2: '戏迷达人纪念徽章', 3: '江湖大侠终极礼包'};
+  showToast('🎁 兑换成功：' + names[id] + '！请前往景区兑换点领取。');
+  updateRedeemButtons();
+  updateProfile();
+}
+
+function showProfile() {
+  showPage('profile');
+  updateProfile();
+  updateTabBar('profile');
+}
+
+function updateProfile() {
+  document.getElementById('stat-checked').textContent = checkedIn.size;
+  document.getElementById('stat-redeemed').textContent = redeemed.length;
+}
+
+function resetData() {
+  if (!confirm('确定要重置所有打卡和兑换记录吗？')) return;
+  checkedIn = new Set();
+  redeemed = [];
+  localStorage.removeItem('tianye_checkedIn');
+  localStorage.removeItem('tianye_redeemed');
+  showToast('🔄 数据已重置');
+  updateHome();
+  updateProfile();
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+updateHome();
+updateProfile();
+</script>
+
+</body>
+</html>
